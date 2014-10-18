@@ -1,8 +1,8 @@
-var position = (function() {
+window.position = (function() {
 	var _position = {
-		location: null,
-		heading: null,
-		acceleration: null,
+		location: {},
+		heading: {},
+		acceleration: {},
 	};
 
 	var id_watchPosition,
@@ -11,7 +11,14 @@ var position = (function() {
 
 	function pollingInit() {
 		id_watchPosition = navigator.geolocation.watchPosition(function success(pos) {
-			_position.location = pos;
+			_position.location.latitude = pos.coords.latitude;
+			_position.location.longitude = pos.coords.longitude;
+			_position.location.altitude = pos.coords.altitude;
+			_position.location.accuracy = pos.coords.accuracy;
+			_position.location.altitudeAccuracy = pos.coords.altitudeAccuracy;
+			_position.location.heading = pos.coords.heading;
+			_position.location.speed = pos.coords.speed;
+			_position.location.timestamp = pos.timestamp;
 		}, function error(e) {
 			console.error(e);
 		}, {
@@ -21,7 +28,10 @@ var position = (function() {
 		});
 
 		id_watchHeading = navigator.compass.watchHeading(function(heading) {
-			_position.heading = heading;
+			_position.heading.magneticHeading = heading.magneticHeading;
+			_position.heading.trueHeading = heading.trueHeading;
+			_position.heading.headingAccuracy = heading.headingAccuracy;
+			_position.heading.timestamp = heading.timestamp;
 		}, function(e) {
 			console.error(e);
 		}, {
@@ -30,7 +40,10 @@ var position = (function() {
 		});
 
 		id_watchAcceleration = navigator.accelerometer.watchAcceleration(function(acceleration) {
-			_position.acceleration = acceleration;
+			_position.acceleration.x = acceleration.x;
+			_position.acceleration.y = acceleration.y;
+			_position.acceleration.z = acceleration.z;
+			_position.acceleration.timestamp = acceleration.timestamp;
 		}, function(e) {
 			console.error(e);
 		}, {
@@ -55,7 +68,7 @@ var position = (function() {
 			return _position.acceleration;
 		},
 		init: function() {
-			initPolling();
+			pollingInit();
 		},
 	};
 })();

@@ -17,120 +17,72 @@ var app = {
 	onDeviceReady: function() {
 		app.receivedEvent('deviceready');
 
-
-		var debug = document.getElementById('debug');
-		var poop = new CameraStream();
-		poop.start();
-		poop.getData(function() {
-			debug.innerHTML = JSON.stringify(arguments, null, 2);
-		}, function() {
-			debug.innerHTML = JSON.stringify(arguments, null, 2);
-		});
-
-		// function pollLocation(cb) {
-		// 	return navigator.geolocation.watchPosition(function success(pos) {
-		// 		cb(null, pos);
-		// 	}, function error(e) {
-		// 		cb(e);
-		// 	}, {
-		// 		maximumAge: 500,
-		// 		timeout: 3000,
-		// 		enableHighAccuracy: true
-		// 	});
-		// }
-
-		var numHits = 0;
-		// pollLocation(function(err, pos) {
-		// 	var debug = document.getElementById('debug');
-		// 	var debugerr = document.getElementById('err');
-
-		// 	if (err) {
-		// 		debugerr.innerHTML = [
-		// 			'     code: ' + err.code,
-		// 			'  message: ' + err.message,
-		// 			'timestamp: ' + (+new Date)
-		// 		].join('\n');
-
-		// 		console.log('error ' + err.code + ': ' + err.message);
-		// 		return;
-		// 	}
-
-		// 	debug.innerHTML = [
-		// 		'  numHits: ' + (numHits++),
-		// 		' latitude: ' + pos.coords.latitude,
-		// 		'longitude: ' + pos.coords.longitude,
-		// 		' altitude: ' + pos.coords.altitude,
-		// 		' accuracy: ' + pos.coords.accuracy,
-		// 		'   altAcc: ' + pos.coords.altitudeAccuracy,
-		// 		'  heading: ' + pos.coords.heading,
-		// 		'    speed: ' + pos.coords.speed,
-		// 		'timestamp: ' + (+pos.timestamp),
-		// 	].join('\n');
-		// 	debugerr.innerHTML = '';
-
-		// 	var out = [
-		// 		pos.coords.latitude,
-		// 		pos.coords.longitude,
-		// 		pos.coords.altitude,
-		// 		pos.coords.accuracy,
-		// 		pos.coords.altitudeAccuracy,
-		// 		pos.coords.heading,
-		// 		pos.coords.speed,
-		// 		pos.timestamp,
-		// 	].join(' ');
-
-		// 	console.log(out);
-
-		// });
-
-
-		// navigator.accelerometer.watchAcceleration(function(acceleration) {
-		// 	var debug = document.getElementById('debug');
-
-		// 	debug.innerHTML = [
-		//               '  numHits: ' + (numHits++),
-		// 		'        x: ' + acceleration.x,
-		// 		'        y: ' + acceleration.y,
-		// 		'        z: ' + acceleration.z,
-		// 		'timestamp: ' + acceleration.timestamp,
-		// 	].join('\n');
-
-
-		// }, function(err) {
-		//           console.log(err);
-		// }, {
-		//           frequency: 100
-		//       });
-
-		// navigator.compass.watchHeading(function(heading) {
-		// 	var debug = document.getElementById('debug');
-
-		// 	debug.innerHTML = [
-		// 		'        numHits: ' + (numHits++),
-		// 		'magneticHeading: ' + heading.magneticHeading,
-		// 		'    trueHeading: ' + heading.trueHeading,
-		// 		'headingAccuracy: ' + heading.headingAccuracy,
-		// 		'      timestamp: ' + heading.timestamp,
-		// 	].join('\n');
-
-		// }, function(err) {
-
-		// }, {
-		// 	filter: 0, // minimum change needed
-		// 	frequency: 100,
-		// });
-
-
+		ready();
 	},
 	// Update DOM on a Received Event
 	receivedEvent: function(id) {
-		// var parentElement = document.getElementById(id);
-		// var listeningElement = parentElement.querySelector('.listening');
-		// var receivedElement = parentElement.querySelector('.received');
-
-		// listeningElement.setAttribute('style', 'display:none;');
-		// receivedElement.setAttribute('style', 'display:block;');
-
 		console.log('Received Event: ' + id);
 	}
 };
+
+
+
+function ready() {
+	position.init();
+
+	var width = window.innerWidth - 10,
+		height = window.innerHeight - 20;
+	var scene = new THREE.Scene();
+	var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+	var renderer = new THREE.CanvasRenderer();
+	renderer.setSize(width, height);
+	document.body.appendChild(renderer.domElement);
+
+	var light = new THREE.PointLight(0xffffff, 10, 100);
+	light.position.set(5, 5, 5);
+	scene.add(light);
+
+
+	// var texture = THREE.ImageUtils.loadTexture('http://www.brandeis.edu/about/images/newformat/map2.jpg');
+
+
+	var geometry = new THREE.BoxGeometry(5, 5, 0.1);
+	var material = new THREE.MeshBasicMaterial({
+        side: THREE.DoubleSide,
+        color: 0xff0000,
+		// map: texture,
+	});
+	var cube = new THREE.Mesh(geometry, material);
+	scene.add(cube);
+    cube.doubleSided = true;
+
+	// var geo_line = new THREE.BoxGeometry(0.1, 0.1, 1.5);
+	// var line = new THREE.Mesh(geo_line, material);
+	// scene.add(line);
+	// line.position.z = 1;
+
+	camera.position.z = 5;
+
+
+	function render() {
+		// cube.rotation.x += 0.1;
+		// cube.rotation.y += 0.1;
+
+		var a = position.getAcceleration();
+		// console.log(a.x + ' ' + a.y + ' ' + a.z);
+		if (Math.abs((a.x * a.x + a.y * a.y + a.z * a.z) - (9.81 * 9.81)) < 20) {
+			cube.lookAt(new THREE.Vector3(0, a.y, a.z));
+		}
+
+		var h = position.getHeading();
+		var rh = h.magneticHeading * Math.PI / 180;
+		cube.rotation.z = rh;
+		// line.lookAt(new THREE.Vector3(Math.cos(rh), Math.sin(rh), 0));
+
+		// console.log(a.x * a.x + a.y * a.y + a.z * a.z);
+
+		requestAnimationFrame(render);
+		renderer.render(scene, camera);
+	}
+	render();
+}
