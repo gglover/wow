@@ -1,3 +1,8 @@
+var dispatcher = new WebSocketRails('108.179.144.59:3000/websocket');
+dispatcher.bind('post_location', function() {
+	console.log('yeah');
+});
+
 var app = {
 	// Application Constructor
 	initialize: function() {
@@ -17,7 +22,23 @@ var app = {
 	onDeviceReady: function() {
 		app.receivedEvent('deviceready');
 
-		ready();
+		//TODO: remove
+		// var msg = {
+		// 	profile: '' + data.input1
+		// };
+		// console.log(JSON.stringify(msg));
+		// dispatcher.trigger('authenticate', msg);
+		// ready();
+
+		navigator.notification.prompt('what ur last.fm acct name?', function(data) {
+			var msg = {
+				profile: '' + data.input1
+			};
+			console.log(JSON.stringify(msg));
+			dispatcher.trigger('authenticate', msg);
+			ready();
+		}, 'acct', ["OK", "Cancel"], 'asparagus22')
+
 	},
 	// Update DOM on a Received Event
 	receivedEvent: function(id) {
@@ -48,41 +69,109 @@ function ready() {
 
 	var geometry = new THREE.BoxGeometry(5, 5, 0.1);
 	var material = new THREE.MeshBasicMaterial({
-        side: THREE.DoubleSide,
-        color: 0xff0000,
+		side: THREE.DoubleSide,
+		color: 0xabdeae,
 		// map: texture,
 	});
-	var cube = new THREE.Mesh(geometry, material);
-	scene.add(cube);
-    cube.doubleSided = true;
+	var plane = new THREE.Mesh(geometry, material);
+	scene.add(plane);
 
-	// var geo_line = new THREE.BoxGeometry(0.1, 0.1, 1.5);
-	// var line = new THREE.Mesh(geo_line, material);
-	// scene.add(line);
-	// line.position.z = 1;
+
+	var cur_pos = {
+		latitude: 0,
+		longitude: 0,
+		altitude: 0,
+	};
 
 	camera.position.z = 5;
 
+	var max_nearby = 10;
+	var cubes = [];
+	for (var i = 0; i < max_nearby; i++) {
+		cubes[i] = new THREE.Mesh(
+			new THREE.BoxGeometry(0.1, 0.1, 0.1),
+			new THREE.MeshBasicMaterial({
+				side: THREE.DoubleSide,
+				color: 0xfa3737,
+			}));
+		cubes[i].position.z = -10;
+		scene.add(cubes[i]);
+	}
+
+	// console.log(JSON.stringify(cubes));
+
+	dispatcher.bind('listeners', function(users) {
+		console.log(JSON.stringify(users));
+		users.message.forEach(function(user, index) {
+			if (index > cubes.length) {
+				return;
+			}
+
+			if (user.latitude == null || user.latitude == null) {
+				return;
+			}
+			console.log('print user ' + i + ' ' + user);
+
+			console.log('cube pos (pre): ' + JSON.stringify(cubes[i]));
+
+			cubes[i].position.x = user.latitude - cur_pos.latitude;
+			cubes[i].position.y = user.longitude - cur_pos.longitude;
+			cubes[i].position.z = 1;
+
+			console.log('cube pos: ' + JSON.stringify(cubes[i].position));
+		});
+	});
+	setInterval(function() {
+		dispatcher.trigger('get_listeners');
+	}, 5000);
+
+
 
 	function render() {
-		// cube.rotation.x += 0.1;
-		// cube.rotation.y += 0.1;
 
 		var a = position.getAcceleration();
-		// console.log(a.x + ' ' + a.y + ' ' + a.z);
+		var h = position.getHeading();
+
 		if (Math.abs((a.x * a.x + a.y * a.y + a.z * a.z) - (9.81 * 9.81)) < 20) {
-			cube.lookAt(new THREE.Vector3(0, a.y, a.z));
+			// camera.position.z = -a.z;
 		}
 
-		var h = position.getHeading();
-		var rh = h.magneticHeading * Math.PI / 180;
-		cube.rotation.z = rh;
-		// line.lookAt(new THREE.Vector3(Math.cos(rh), Math.sin(rh), 0));
+		camera.rotation.z = -h.magneticHeading * Math.PI / 180;
 
-		// console.log(a.x * a.x + a.y * a.y + a.z * a.z);
+		// camera.position.x = Math.cos(h.magneticHeading * Math.PI / 180) * 5;
+		// camera.position.y = Math.sin(h.magneticHeading * Math.PI / 180) * 5;
+
+		// camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+
 
 		requestAnimationFrame(render);
 		renderer.render(scene, camera);
 	}
 	render();
+
+
+	navigator.geolocation.watchPosition(function success(pos) {
+		var msg = {
+			lat: pos.coords.latitude,
+			lon: pos.coords.longitude,
+			alt: pos.coords.altitude,
+		};
+
+		cur_pos = {
+			"latitude": pos.coords.latitude,
+			"longitude": pos.coords.longitude,
+			"altitude": pos.coords.altitude,
+		};
+
+		console.log(JSON.stringify(msg));
+		dispatcher.trigger('post_location', msg);
+	}, function error(e) {
+		console.error(e);
+	}, {
+		maximumAge: 500,
+		timeout: 3000,
+		enableHighAccuracy: true
+	});
+
 }

@@ -10,22 +10,22 @@ window.position = (function() {
 		id_watchAcceleration;
 
 	function pollingInit() {
-		id_watchPosition = navigator.geolocation.watchPosition(function success(pos) {
-			_position.location.latitude = pos.coords.latitude;
-			_position.location.longitude = pos.coords.longitude;
-			_position.location.altitude = pos.coords.altitude;
-			_position.location.accuracy = pos.coords.accuracy;
-			_position.location.altitudeAccuracy = pos.coords.altitudeAccuracy;
-			_position.location.heading = pos.coords.heading;
-			_position.location.speed = pos.coords.speed;
-			_position.location.timestamp = pos.timestamp;
-		}, function error(e) {
-			console.error(e);
-		}, {
-			maximumAge: 500,
-			timeout: 3000,
-			enableHighAccuracy: true
-		});
+		// id_watchPosition = navigator.geolocation.watchPosition(function success(pos) {
+		// 	_position.location.latitude = pos.coords.latitude;
+		// 	_position.location.longitude = pos.coords.longitude;
+		// 	_position.location.altitude = pos.coords.altitude;
+		// 	_position.location.accuracy = pos.coords.accuracy;
+		// 	_position.location.altitudeAccuracy = pos.coords.altitudeAccuracy;
+		// 	_position.location.heading = pos.coords.heading;
+		// 	_position.location.speed = pos.coords.speed;
+		// 	_position.location.timestamp = pos.timestamp;
+		// }, function error(e) {
+		// 	console.error(e);
+		// }, {
+		// 	maximumAge: 500,
+		// 	timeout: 3000,
+		// 	enableHighAccuracy: true
+		// });
 
 		id_watchHeading = navigator.compass.watchHeading(function(heading) {
 			_position.heading.magneticHeading = heading.magneticHeading;
