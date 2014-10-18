@@ -128,13 +128,6 @@ var app = {
 		// 	frequency: 100,
 		// });
 
-		navigator.camera.getPicture(function(data) {
-			var image = document.getElementById('cam');
-			image.src = "data:image/jpeg;base64," + data;
-		}, function(err) {
-
-		}, {});
-
 
 	},
 	// Update DOM on a Received Event
